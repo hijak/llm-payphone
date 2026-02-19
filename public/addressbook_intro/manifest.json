@@ -1,0 +1,7 @@
+{
+  "fps": 24,
+  "frameCount": 192,
+  "baseUrl": "/addressbook_intro/",
+  "pattern": "ab_%03d.png",
+  "resetFrame": "/addressbook_intro/ab_001.png"
+}

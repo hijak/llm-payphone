@@ -1,0 +1,35 @@
+{
+  "routes": [
+    {
+      "number": "1",
+      "label": "Plutus",
+      "provider": "openclaw",
+      "model": "llama3.1:8b",
+      "voiceId": "Timothy",
+      "baseUrl": "http://10.13.37.9:18789",
+      "apiKey": "0de9ca882521d4482fe2d50ac027827561c3fd1c5e975214",
+      "agentId": "main"
+    },
+    {
+      "number": "2",
+      "label": "Comedian",
+      "provider": "ollama",
+      "model": "comedian:latest",
+      "voiceId": "Timothy"
+    },
+    {
+      "number": "3",
+      "label": "Lisabot",
+      "provider": "ollama",
+      "model": "MeaTLoTioN/LisaBot:latest",
+      "voiceId": "Ronald"
+    },
+    {
+      "number": "4",
+      "label": "Self Image",
+      "provider": "ollama",
+      "model": "lfm2.5-thinking:latest",
+      "voiceId": "Timothy"
+    }
+  ]
+}
