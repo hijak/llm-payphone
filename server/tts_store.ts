@@ -23,6 +23,7 @@ export type TtsConfig = {
   kittenModelId?: string
   kittenVoiceId?: string
   kittenPythonBin?: string
+  kittenBaseUrl?: string
 }
 
 // Legacy JSON store (one-time migration)
@@ -63,14 +64,14 @@ export function saveTts(cfg: TtsConfig) {
       inworldApiKey, inworldVoiceId, inworldModelId,
       elevenlabsApiKey, elevenlabsVoiceId, elevenlabsModelId,
       openaiApiKey, openaiBaseUrl, openaiModelId, openaiVoiceId,
-      kittenModelId, kittenVoiceId, kittenPythonBin,
+      kittenModelId, kittenVoiceId, kittenPythonBin, kittenBaseUrl,
       updatedAt
     ) values (
       1, @provider,
       @inworldApiKey, @inworldVoiceId, @inworldModelId,
       @elevenlabsApiKey, @elevenlabsVoiceId, @elevenlabsModelId,
       @openaiApiKey, @openaiBaseUrl, @openaiModelId, @openaiVoiceId,
-      @kittenModelId, @kittenVoiceId, @kittenPythonBin,
+      @kittenModelId, @kittenVoiceId, @kittenPythonBin, @kittenBaseUrl,
       @updatedAt
     )
     on conflict(id) do update set
@@ -88,6 +89,7 @@ export function saveTts(cfg: TtsConfig) {
       kittenModelId=excluded.kittenModelId,
       kittenVoiceId=excluded.kittenVoiceId,
       kittenPythonBin=excluded.kittenPythonBin,
+      kittenBaseUrl=excluded.kittenBaseUrl,
       updatedAt=excluded.updatedAt
   `).run({
     provider: n.provider,
@@ -105,6 +107,7 @@ export function saveTts(cfg: TtsConfig) {
     kittenModelId: n.kittenModelId ?? null,
     kittenVoiceId: n.kittenVoiceId ?? null,
     kittenPythonBin: n.kittenPythonBin ?? null,
+    kittenBaseUrl: n.kittenBaseUrl ?? null,
 
     updatedAt: now,
   })
@@ -137,5 +140,6 @@ export function normalizeTts(cfg: any): TtsConfig {
     kittenModelId: String(cfg?.kittenModelId ?? '').trim() || undefined,
     kittenVoiceId: String(cfg?.kittenVoiceId ?? '').trim() || undefined,
     kittenPythonBin: String(cfg?.kittenPythonBin ?? '').trim() || undefined,
+    kittenBaseUrl: String(cfg?.kittenBaseUrl ?? '').trim().replace(/\/$/, '') || undefined,
   }
 }

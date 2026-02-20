@@ -41,6 +41,7 @@ type TtsConfig = {
   kittenModelId?: string
   kittenVoiceId?: string
   kittenPythonBin?: string
+  kittenBaseUrl?: string
 }
 
 type SettingsPayload = { routes: RouteConfig[] }
@@ -374,7 +375,16 @@ function SettingsOverlay({
               </label>
 
               <label>
-                <div className="lbl">Python</div>
+                <div className="lbl">Base URL (microservice)</div>
+                <input
+                  value={tts.kittenBaseUrl || ''}
+                  onChange={(e) => setTts({ ...tts, kittenBaseUrl: e.target.value })}
+                  placeholder="http://10.13.37.9:9123"
+                />
+              </label>
+
+              <label>
+                <div className="lbl">Python (fallback)</div>
                 <input
                   value={tts.kittenPythonBin || ''}
                   onChange={(e) => setTts({ ...tts, kittenPythonBin: e.target.value })}
@@ -383,7 +393,7 @@ function SettingsOverlay({
               </label>
 
               <div className="settingsHint" style={{ marginTop: 8 }}>
-                Requires Python 3.12 + KittenTTS installed. See README.
+                Recommended: set Base URL to the always-on microservice. Python fallback is slower.
               </div>
             </>
           )}

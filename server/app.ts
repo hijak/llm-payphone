@@ -65,6 +65,7 @@ const TtsPutReq = z.object({
     kittenModelId: z.string().optional(),
     kittenVoiceId: z.string().optional(),
     kittenPythonBin: z.string().optional(),
+    kittenBaseUrl: z.string().optional(),
   }),
 });
 
@@ -297,7 +298,7 @@ app.post("/api/tts", async (req, res) => {
 
   if (provider === "kittentts") {
     // Prefer persistent microservice if configured.
-    const base = String(process.env.KITTENTTS_BASE_URL || '').trim().replace(/\/$/, '')
+    const base = String(ttsCfg.kittenBaseUrl || process.env.KITTENTTS_BASE_URL || '').trim().replace(/\/$/, '')
     const voice = (routeVoiceId || ttsCfg.kittenVoiceId || process.env.KITTENTTS_VOICE || 'Jasper').trim()
 
     // Safety: cap text length further for local TTS

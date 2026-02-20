@@ -48,6 +48,7 @@ export function getDb() {
       kittenModelId text,
       kittenVoiceId text,
       kittenPythonBin text,
+      kittenBaseUrl text,
 
       updatedAt integer not null
     );
@@ -63,6 +64,7 @@ export function getDb() {
   addCol('kittenModelId', 'text')
   addCol('kittenVoiceId', 'text')
   addCol('kittenPythonBin', 'text')
+  addCol('kittenBaseUrl', 'text')
 
   // Ensure singleton row exists
   const now = Date.now()
