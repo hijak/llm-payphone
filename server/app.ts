@@ -296,13 +296,37 @@ app.post("/api/tts", async (req, res) => {
   }
 
   if (provider === "kittentts") {
-    const { spawn } = await import('node:child_process')
-    const python = (ttsCfg.kittenPythonBin || process.env.KITTENTTS_PYTHON || 'python3').trim()
-    const model = (ttsCfg.kittenModelId || process.env.KITTENTTS_MODEL || 'KittenML/kitten-tts-mini-0.8').trim()
+    // Prefer persistent microservice if configured.
+    const base = String(process.env.KITTENTTS_BASE_URL || '').trim().replace(/\/$/, '')
     const voice = (routeVoiceId || ttsCfg.kittenVoiceId || process.env.KITTENTTS_VOICE || 'Jasper').trim()
 
     // Safety: cap text length further for local TTS
     const clipped = String(text).slice(0, 2000)
+
+    if (base) {
+      try {
+        const r = await fetch(`${base}/tts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: clipped, voice }),
+        })
+        const raw = Buffer.from(await r.arrayBuffer())
+        if (!r.ok) {
+          const errText = raw.toString('utf8').slice(0, 1200)
+          return res.status(502).json({ error: 'kittentts_service_error', status: r.status, body: errText })
+        }
+        res.setHeader('Content-Type', 'audio/wav')
+        res.setHeader('Cache-Control', 'no-store')
+        return res.send(raw)
+      } catch (e: any) {
+        // fall back to local python spawn below
+      }
+    }
+
+    // Fallback: local python spawn (no persistent service)
+    const { spawn } = await import('node:child_process')
+    const python = (ttsCfg.kittenPythonBin || process.env.KITTENTTS_PYTHON || 'python3').trim()
+    const model = (ttsCfg.kittenModelId || process.env.KITTENTTS_MODEL || 'KittenML/kitten-tts-mini-0.8').trim()
 
     const { fileURLToPath } = await import('node:url')
     const scriptPath = fileURLToPath(new URL('./kittentts_runner.py', import.meta.url))

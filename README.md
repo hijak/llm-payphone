@@ -52,7 +52,29 @@ npm run dev
 
 ### Optional: enable KittenTTS (local)
 
-KittenTTS is a local TTS option. This repo calls a tiny Python helper (`server/kittentts_runner.py`) to synthesize audio.
+KittenTTS is a local TTS option.
+
+There are **two modes**:
+
+#### Mode A (recommended): persistent KittenTTS microservice (separate project)
+
+This keeps the model warm in memory and avoids spawning Python for every TTS request.
+
+- Run the microservice separately (recommended repo/folder name: `kittentts-microservice`)
+- Configure payphone to call it via HTTP.
+
+In `.env`:
+
+```bash
+KITTENTTS_BASE_URL=http://127.0.0.1:9123
+KITTENTTS_VOICE=Jasper
+```
+
+In the app Settings → TTS, select **KittenTTS (local)** and pick a voice.
+
+#### Mode B (fallback): per-request python spawn (no service)
+
+This repo can also call a tiny Python helper (`server/kittentts_runner.py`) per request.
 
 **Requirements:** Python 3.12.
 
@@ -72,8 +94,6 @@ KITTENTTS_PYTHON=./.venv-kittentts/bin/python
 KITTENTTS_MODEL=KittenML/kitten-tts-mini-0.8
 KITTENTTS_VOICE=Jasper
 ```
-
-In the app Settings → TTS, select **KittenTTS (local)** and pick a voice.
 
 **Access points:**
 - **Web UI:** http://localhost:5173 (binds to 0.0.0.0)
