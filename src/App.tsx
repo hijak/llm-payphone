@@ -20,7 +20,7 @@ type RouteConfig = {
   avatarUrl?: string
 }
 
-type TtsProvider = 'inworld' | 'elevenlabs' | 'openai'
+type TtsProvider = 'inworld' | 'elevenlabs' | 'openai' | 'kittentts'
 
 type TtsConfig = {
   provider: TtsProvider
@@ -37,6 +37,10 @@ type TtsConfig = {
   openaiBaseUrl?: string
   openaiModelId?: string
   openaiVoiceId?: string
+  // KittenTTS
+  kittenModelId?: string
+  kittenVoiceId?: string
+  kittenPythonBin?: string
 }
 
 type SettingsPayload = { routes: RouteConfig[] }
@@ -247,6 +251,7 @@ function SettingsOverlay({
               <option value="inworld">Inworld</option>
               <option value="elevenlabs">ElevenLabs</option>
               <option value="openai">OpenAI</option>
+              <option value="kittentts">KittenTTS (local)</option>
             </select>
           </label>
 
@@ -342,6 +347,44 @@ function SettingsOverlay({
                   placeholder="sk-..."
                 />
               </label>
+            </>
+          )}
+
+          {tts.provider === 'kittentts' && (
+            <>
+              <label>
+                <div className="lbl">Model (HF)</div>
+                <input
+                  value={tts.kittenModelId || ''}
+                  onChange={(e) => setTts({ ...tts, kittenModelId: e.target.value })}
+                  placeholder="KittenML/kitten-tts-mini-0.8"
+                />
+              </label>
+
+              <label>
+                <div className="lbl">Voice</div>
+                <select
+                  value={tts.kittenVoiceId || 'Jasper'}
+                  onChange={(e) => setTts({ ...tts, kittenVoiceId: e.target.value })}
+                >
+                  {['Bella', 'Jasper', 'Luna', 'Bruno', 'Rosie', 'Hugo', 'Kiki', 'Leo'].map((v) => (
+                    <option key={v} value={v}>{v}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <div className="lbl">Python</div>
+                <input
+                  value={tts.kittenPythonBin || ''}
+                  onChange={(e) => setTts({ ...tts, kittenPythonBin: e.target.value })}
+                  placeholder="python3"
+                />
+              </label>
+
+              <div className="settingsHint" style={{ marginTop: 8 }}>
+                Requires Python 3.12 + KittenTTS installed. See README.
+              </div>
             </>
           )}
         </div>

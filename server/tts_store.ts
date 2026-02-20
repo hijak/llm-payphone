@@ -2,7 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { getDb } from './db.js'
 
-export type TtsProvider = 'inworld' | 'elevenlabs' | 'openai'
+export type TtsProvider = 'inworld' | 'elevenlabs' | 'openai' | 'kittentts'
 
 export type TtsConfig = {
   provider: TtsProvider
@@ -19,6 +19,10 @@ export type TtsConfig = {
   openaiBaseUrl?: string
   openaiModelId?: string
   openaiVoiceId?: string
+  // KittenTTS (local)
+  kittenModelId?: string
+  kittenVoiceId?: string
+  kittenPythonBin?: string
 }
 
 // Legacy JSON store (one-time migration)
@@ -59,12 +63,14 @@ export function saveTts(cfg: TtsConfig) {
       inworldApiKey, inworldVoiceId, inworldModelId,
       elevenlabsApiKey, elevenlabsVoiceId, elevenlabsModelId,
       openaiApiKey, openaiBaseUrl, openaiModelId, openaiVoiceId,
+      kittenModelId, kittenVoiceId, kittenPythonBin,
       updatedAt
     ) values (
       1, @provider,
       @inworldApiKey, @inworldVoiceId, @inworldModelId,
       @elevenlabsApiKey, @elevenlabsVoiceId, @elevenlabsModelId,
       @openaiApiKey, @openaiBaseUrl, @openaiModelId, @openaiVoiceId,
+      @kittenModelId, @kittenVoiceId, @kittenPythonBin,
       @updatedAt
     )
     on conflict(id) do update set
@@ -79,6 +85,9 @@ export function saveTts(cfg: TtsConfig) {
       openaiBaseUrl=excluded.openaiBaseUrl,
       openaiModelId=excluded.openaiModelId,
       openaiVoiceId=excluded.openaiVoiceId,
+      kittenModelId=excluded.kittenModelId,
+      kittenVoiceId=excluded.kittenVoiceId,
+      kittenPythonBin=excluded.kittenPythonBin,
       updatedAt=excluded.updatedAt
   `).run({
     provider: n.provider,
@@ -92,13 +101,22 @@ export function saveTts(cfg: TtsConfig) {
     openaiBaseUrl: n.openaiBaseUrl ?? null,
     openaiModelId: n.openaiModelId ?? null,
     openaiVoiceId: n.openaiVoiceId ?? null,
+
+    kittenModelId: n.kittenModelId ?? null,
+    kittenVoiceId: n.kittenVoiceId ?? null,
+    kittenPythonBin: n.kittenPythonBin ?? null,
+
     updatedAt: now,
   })
 }
 
 export function normalizeTts(cfg: any): TtsConfig {
   const rawProvider = String(cfg?.provider ?? '').trim()
-  const provider: TtsProvider = rawProvider === 'elevenlabs' ? 'elevenlabs' : rawProvider === 'openai' ? 'openai' : 'inworld'
+  const provider: TtsProvider =
+    rawProvider === 'elevenlabs' ? 'elevenlabs'
+      : rawProvider === 'openai' ? 'openai'
+      : rawProvider === 'kittentts' ? 'kittentts'
+      : 'inworld'
 
   return {
     provider,
@@ -115,5 +133,9 @@ export function normalizeTts(cfg: any): TtsConfig {
     openaiBaseUrl: String(cfg?.openaiBaseUrl ?? '').trim() || undefined,
     openaiModelId: String(cfg?.openaiModelId ?? '').trim() || undefined,
     openaiVoiceId: String(cfg?.openaiVoiceId ?? '').trim() || undefined,
+
+    kittenModelId: String(cfg?.kittenModelId ?? '').trim() || undefined,
+    kittenVoiceId: String(cfg?.kittenVoiceId ?? '').trim() || undefined,
+    kittenPythonBin: String(cfg?.kittenPythonBin ?? '').trim() || undefined,
   }
 }

@@ -26,6 +26,7 @@ dist-ssr
 # Local secrets / runtime state
 .env
 .env.*
+!.env.example
 *.db
 *.db-wal
 *.db-shm

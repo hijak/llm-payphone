@@ -45,9 +45,24 @@ export function getDb() {
       openaiModelId text,
       openaiVoiceId text,
 
+      kittenModelId text,
+      kittenVoiceId text,
+      kittenPythonBin text,
+
       updatedAt integer not null
     );
   `)
+
+  // Lightweight migrations (add columns if table existed before)
+  const cols = new Set((db.prepare("pragma table_info('tts_config')").all() as any[]).map((r) => String(r.name)))
+  function addCol(name: string, type: string) {
+    if (cols.has(name)) return
+    db.exec(`alter table tts_config add column ${name} ${type};`)
+    cols.add(name)
+  }
+  addCol('kittenModelId', 'text')
+  addCol('kittenVoiceId', 'text')
+  addCol('kittenPythonBin', 'text')
 
   // Ensure singleton row exists
   const now = Date.now()

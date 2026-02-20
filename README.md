@@ -50,6 +50,31 @@ npm install
 npm run dev
 ```
 
+### Optional: enable KittenTTS (local)
+
+KittenTTS is a local TTS option. This repo calls a tiny Python helper (`server/kittentts_runner.py`) to synthesize audio.
+
+**Requirements:** Python 3.12.
+
+Install KittenTTS (wheel) + deps:
+
+```bash
+python3.12 -m venv .venv-kittentts
+source .venv-kittentts/bin/activate
+pip install --upgrade pip
+pip install https://github.com/KittenML/KittenTTS/releases/download/0.8/kittentts-0.8.0-py3-none-any.whl
+```
+
+Then set in `.env`:
+
+```bash
+KITTENTTS_PYTHON=./.venv-kittentts/bin/python
+KITTENTTS_MODEL=KittenML/kitten-tts-mini-0.8
+KITTENTTS_VOICE=Jasper
+```
+
+In the app Settings → TTS, select **KittenTTS (local)** and pick a voice.
+
 **Access points:**
 - **Web UI:** http://localhost:5173 (binds to 0.0.0.0)
 - **API:** http://localhost:5174
@@ -80,6 +105,7 @@ npm run dev
 - **Inworld** (default)
 - **ElevenLabs**
 - **OpenAI TTS**
+- **KittenTTS (local)** — lightweight local model (uses `kitten-tts-mini`)
 
 ### Speech-to-Text
 - **Deepgram** (for voice input)

@@ -47,7 +47,7 @@ app.get("/api/tts-config", (_req, res) => {
 
 const TtsPutReq = z.object({
   tts: z.object({
-    provider: z.enum(["inworld", "elevenlabs", "openai"]),
+    provider: z.enum(["inworld", "elevenlabs", "openai", "kittentts"]),
 
     inworldApiKey: z.string().optional(),
     inworldVoiceId: z.string().optional(),
@@ -61,6 +61,10 @@ const TtsPutReq = z.object({
     openaiBaseUrl: z.string().optional(),
     openaiModelId: z.string().optional(),
     openaiVoiceId: z.string().optional(),
+
+    kittenModelId: z.string().optional(),
+    kittenVoiceId: z.string().optional(),
+    kittenPythonBin: z.string().optional(),
   }),
 });
 
@@ -289,6 +293,38 @@ app.post("/api/tts", async (req, res) => {
     res.setHeader("Content-Type", "audio/mpeg");
     res.setHeader("Cache-Control", "no-store");
     return res.send(raw);
+  }
+
+  if (provider === "kittentts") {
+    const { spawn } = await import('node:child_process')
+    const python = (ttsCfg.kittenPythonBin || process.env.KITTENTTS_PYTHON || 'python3').trim()
+    const model = (ttsCfg.kittenModelId || process.env.KITTENTTS_MODEL || 'KittenML/kitten-tts-mini-0.8').trim()
+    const voice = (routeVoiceId || ttsCfg.kittenVoiceId || process.env.KITTENTTS_VOICE || 'Jasper').trim()
+
+    // Safety: cap text length further for local TTS
+    const clipped = String(text).slice(0, 2000)
+
+    const { fileURLToPath } = await import('node:url')
+    const scriptPath = fileURLToPath(new URL('./kittentts_runner.py', import.meta.url))
+    const args = [scriptPath, '--model', model, '--voice', voice, '--text', clipped]
+
+    const child = spawn(python, args, { stdio: ['ignore', 'pipe', 'pipe'] })
+
+    const chunks: Buffer[] = []
+    const errChunks: Buffer[] = []
+    child.stdout.on('data', (c) => chunks.push(Buffer.from(c)))
+    child.stderr.on('data', (c) => errChunks.push(Buffer.from(c)))
+
+    const code: number = await new Promise((resolve) => child.on('close', resolve)) as any
+    const out = Buffer.concat(chunks)
+    if (code !== 0 || out.length === 0) {
+      const errText = Buffer.concat(errChunks).toString('utf8').slice(0, 1200)
+      return res.status(502).json({ error: 'kittentts_error', code, stderr: errText })
+    }
+
+    res.setHeader('Content-Type', 'audio/wav')
+    res.setHeader('Cache-Control', 'no-store')
+    return res.send(out)
   }
 
   // Default: inworld
