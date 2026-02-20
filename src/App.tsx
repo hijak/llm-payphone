@@ -191,7 +191,8 @@ function SettingsOverlay({
   setRoutes,
   tts,
   setTts,
-  ollamaModels,
+  ollamaModelsByUrl,
+  loadOllamaModels,
   onClose,
   onSave,
 }: {
@@ -200,7 +201,8 @@ function SettingsOverlay({
   setRoutes: (r: RouteConfig[]) => void
   tts: TtsConfig
   setTts: (t: TtsConfig) => void
-  ollamaModels: string[]
+  ollamaModelsByUrl: Record<string, string[]>
+  loadOllamaModels: (baseUrl?: string) => Promise<void>
   onClose: () => void
   onSave: () => void
 }) {
@@ -212,10 +214,18 @@ function SettingsOverlay({
     setRoutes(next)
   }
 
+  const DEFAULT_OLLAMA_KEY = '__default__'
+
+  function modelsFor(baseUrl?: string) {
+    const key = normUrl(baseUrl) || DEFAULT_OLLAMA_KEY
+    return ollamaModelsByUrl[key] || []
+  }
+
   function add() {
+    const ms = modelsFor(undefined)
     setRoutes([
       ...routes,
-      { number: '', label: '', provider: 'ollama', model: ollamaModels[0] || 'llama3.1:8b' },
+      { number: '', label: '', provider: 'ollama', model: ms[0] || 'llama3.1:8b' },
     ])
   }
 
@@ -476,9 +486,13 @@ function SettingsOverlay({
                   <div className="lbl">Model</div>
                   {r.provider === 'ollama' ? (
                     <select value={r.model} onChange={(e) => update(i, { model: e.target.value })}>
-                      {ollamaModels.map((m) => (
-                        <option key={m} value={m}>{m}</option>
-                      ))}
+                      {modelsFor(r.baseUrl).length === 0 ? (
+                        <option value={r.model || ''}>{r.model || '(load models)'}</option>
+                      ) : (
+                        modelsFor(r.baseUrl).map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))
+                      )}
                     </select>
                   ) : (
                     <input value={r.model} onChange={(e) => update(i, { model: e.target.value })} placeholder="e.g. gpt-4o-mini" />
@@ -486,10 +500,28 @@ function SettingsOverlay({
                 </label>
 
                 {r.provider === 'ollama' && (
-                  <label>
-                    <div className="lbl">Ollama Base URL</div>
-                    <input value={r.baseUrl || ''} onChange={(e) => update(i, { baseUrl: e.target.value })} placeholder="http://127.0.0.1:11434" />
-                  </label>
+                  <>
+                    <label>
+                      <div className="lbl">Ollama Base URL</div>
+                      <input
+                        value={r.baseUrl || ''}
+                        onChange={(e) => update(i, { baseUrl: e.target.value })}
+                        placeholder="http://127.0.0.1:11434"
+                      />
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+                      <button
+                        className="btnGhost"
+                        onClick={() => loadOllamaModels(r.baseUrl)}
+                        type="button"
+                      >
+                        Load models
+                      </button>
+                      <div className="settingsHint" style={{ marginBottom: 2 }}>
+                        Pulls models from the selected Ollama base URL.
+                      </div>
+                    </div>
+                  </>
                 )}
 
                 <label>
@@ -538,7 +570,7 @@ export default function App() {
 
   const [routes, setRoutes] = useState<RouteConfig[]>([])
   const [tts, setTts] = useState<TtsConfig>({ provider: 'inworld' })
-  const [ollamaModels, setOllamaModels] = useState<string[]>([])
+  const [ollamaModelsByUrl, setOllamaModelsByUrl] = useState<Record<string, string[]>>({})
 
   const [history, setHistory] = useState<ChatMsg[]>([])
   const [speaking, setSpeaking] = useState(false)
@@ -588,6 +620,22 @@ export default function App() {
   const ringPatternTimerRef = useRef<number | null>(null)
   const greetingAbortRef = useRef<AbortController | null>(null)
 
+  const DEFAULT_OLLAMA_KEY = '__default__'
+
+  async function loadOllamaModels(baseUrl?: string) {
+    const base = String(baseUrl || '').trim().replace(/\/$/, '')
+    const key = base || DEFAULT_OLLAMA_KEY
+
+    const url = new URL('/api/models/ollama', window.location.origin)
+    if (base) url.searchParams.set('baseUrl', base)
+
+    const m: OllamaModelsResp = await fetch(url.toString())
+      .then((x) => x.json())
+      .catch(() => ({ models: [] }))
+
+    setOllamaModelsByUrl((prev) => ({ ...prev, [key]: m.models || [] }))
+  }
+
   async function refreshConfig() {
     const r = await fetch('/api/routes').then((x) => x.json()).catch(() => ({ routes: [] }))
     setRoutes(r.routes || [])
@@ -595,8 +643,8 @@ export default function App() {
     const t = await fetch('/api/tts-config').then((x) => x.json()).catch(() => ({ tts: { provider: 'inworld' } }))
     setTts(t.tts || { provider: 'inworld' })
 
-    const m: OllamaModelsResp = await fetch('/api/models/ollama').then((x) => x.json()).catch(() => ({ models: [] }))
-    setOllamaModels(m.models || [])
+    // Load default Ollama models once; per-route remotes can be loaded from Settings.
+    await loadOllamaModels(undefined)
   }
 
   useEffect(() => {
@@ -1309,7 +1357,8 @@ export default function App() {
           setRoutes={setRoutes}
           tts={tts}
           setTts={setTts}
-          ollamaModels={ollamaModels}
+          ollamaModelsByUrl={ollamaModelsByUrl}
+          loadOllamaModels={loadOllamaModels}
           onClose={() => setSettingsOpen(false)}
           onSave={saveSettings}
         />
