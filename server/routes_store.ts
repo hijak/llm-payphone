@@ -93,7 +93,10 @@ function normalizeRoute(r: any): RouteConfig {
     provider,
     model: String(r?.model ?? ''),
     voiceId: String(r?.voiceId ?? '').trim() || undefined,
-    baseUrl: (provider === 'openai_compat' || provider === 'openclaw') ? String(r?.baseUrl ?? '').trim() || undefined : undefined,
+    // baseUrl is valid for all providers:
+    // - ollama: optional remote Ollama URL
+    // - openai_compat/openclaw: OpenAI-style base
+    baseUrl: String(r?.baseUrl ?? '').trim() || undefined,
     apiKey: (provider === 'openai_compat' || provider === 'openclaw') ? String(r?.apiKey ?? '').trim() || undefined : undefined,
     agentId: provider === 'openclaw' ? String(r?.agentId ?? '').trim() || undefined : undefined,
     avatarUrl: String(r?.avatarUrl ?? '').trim() || undefined,

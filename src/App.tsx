@@ -431,9 +431,9 @@ function SettingsOverlay({
                     value={r.provider}
                     onChange={(e) => {
                       const provider = e.target.value as RouteProvider
-                      // If switching away from openai_compat/openclaw, clear their fields.
+                      // If switching to ollama, clear openai-only fields but keep baseUrl (ollama can use it too).
                       if (provider === 'ollama') {
-                        update(i, { provider, baseUrl: undefined, apiKey: undefined, agentId: undefined })
+                        update(i, { provider, apiKey: undefined, agentId: undefined })
                         return
                       }
                       // If switching away from openclaw, clear agentId.
@@ -484,6 +484,13 @@ function SettingsOverlay({
                     <input value={r.model} onChange={(e) => update(i, { model: e.target.value })} placeholder="e.g. gpt-4o-mini" />
                   )}
                 </label>
+
+                {r.provider === 'ollama' && (
+                  <label>
+                    <div className="lbl">Ollama Base URL</div>
+                    <input value={r.baseUrl || ''} onChange={(e) => update(i, { baseUrl: e.target.value })} placeholder="http://127.0.0.1:11434" />
+                  </label>
+                )}
 
                 <label>
                   <div className="lbl">Voice ID</div>

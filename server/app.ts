@@ -102,9 +102,10 @@ app.put("/api/routes", (req, res) => {
 });
 
 // Optional helper: list local ollama models for dropdown
-app.get("/api/models/ollama", async (_req, res) => {
+app.get("/api/models/ollama", async (req, res) => {
   try {
-    const base = OLLAMA_BASE_URL.replace(/\/$/, "");
+    const qBase = String((req.query as any)?.baseUrl || '').trim()
+    const base = (qBase || OLLAMA_BASE_URL).replace(/\/$/, "");
     const r = await fetch(`${base}/api/tags`);
     if (!r.ok) return res.status(502).json({ error: "ollama_tags_error", status: r.status });
     const j: any = await r.json();
@@ -181,8 +182,9 @@ app.post("/api/chat", async (req, res) => {
     return res.json({ number, label: route.label, text: reply });
   }
 
-  // Default: ollama
-  const r = await fetch(`${OLLAMA_BASE_URL.replace(/\/$/, "")}/api/chat`, {
+  // Default: ollama (allow per-route baseUrl override)
+  const ollamaBase = String(route.baseUrl || OLLAMA_BASE_URL).trim().replace(/\/$/, "")
+  const r = await fetch(`${ollamaBase}/api/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
